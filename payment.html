@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Confirmation - VisionCheats</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="images/website-icon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="logo">VisionCheats</div>
+        <nav class="tabs">
+            <a href="index.html#home" class="tab">Home</a>
+            <a href="index.html#products" class="tab">Products</a>
+            <a href="index.html#showcase" class="tab">Showcase</a>
+            <a href="index.html#tos" class="tab">TOS</a>
+        </nav>
+        <div class="icons">
+            <a href="#" id="cart-icon" title="Cart">
+                <i class="fas fa-shopping-cart"></i>
+                <span id="cart-count">0</span>
+            </a>
+        </div>
+    </header>
+
+    <main>
+        <section id="payment-confirmation">
+            <h2>Payment Confirmation</h2>
+            <div id="payment-details"></div>
+            <div id="payment-instructions"></div>
+            <div id="timer">
+                <p>Time remaining to complete payment: <span id="countdown">60:00</span></p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="founder-link">
+                <span>Founder - </span>
+                <a href="https://x0x5.website" target="_blank" title="Visit x0x5.website">
+                    <i class="fas fa-globe"></i>
+                </a>
+            </div>
+            <p>&copy; 2023 VisionCheats. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        function displayPaymentDetails() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const paymentMethod = urlParams.get('method');
+            const totalAmount = urlParams.get('total');
+
+            const paymentDetails = document.getElementById('payment-details');
+            const paymentInstructions = document.getElementById('payment-instructions');
+
+            if (paymentMethod && totalAmount) {
+                paymentDetails.innerHTML = `
+                        <p><strong>Payment Method:</strong> ${paymentMethod}</p>
+                        <p><strong>Total Amount:</strong> \u20AC${totalAmount}</p>
+                    `;
+
+                let instructions = '';
+                switch (paymentMethod) {
+                    case 'paypal':
+                        instructions = `
+                                <p>Please send <strong>\u20AC${totalAmount}</strong> to the following PayPal email address:</p>
+                                <p><strong>PayPal Email:</strong> Sityounn@gmail.com</p>
+                                <p>Once the payment is completed, please contact us with your transaction ID for confirmation.</p>
+                            `;
+                        break;
+                    case 'litecoin':
+                        instructions = `
+                                <p>Please send <strong>\u20AC${totalAmount}</strong> worth of Litecoin (LTC) to the following address:</p>
+                                <p><strong>LTC Address:</strong> LYDu7ZNNLzv4BcerfHhcgXrBcXzjGKYAiV</p>
+                                <p>Once the payment is completed, please contact us with your transaction ID for confirmation.</p>
+                            `;
+                        break;
+                    case 'ethereum':
+                        instructions = `
+                                <p>Please send <strong>\u20AC${totalAmount}</strong> worth of Ethereum (ETH) to the following address:</p>
+                                <p><strong>ETH Address:</strong> 0xd21B0799C6065d2Eb6A8c4345f8e19EA8EAd55c8</p>
+                                <p>Once the payment is completed, please contact us with your transaction ID for confirmation.</p>
+                            `;
+                        break;
+                    case 'bitcoin':
+                        instructions = `
+                                <p>Please send <strong>\u20AC${totalAmount}</strong> worth of Bitcoin (BTC) to the following address:</p>
+                                <p><strong>BTC Address:</strong> bc1qszm9utuf5t4cr33mswxnfkgg87rhr4yxdx224</p>
+                                <p>Once the payment is completed, please contact us with your transaction ID for confirmation.</p>
+                            `;
+                        break;
+                    default:
+                        instructions = `<p class="error-message">Invalid payment method. Please try again.</p>`;
+                        break;
+                }
+
+                paymentInstructions.innerHTML = instructions;
+
+                sendOrderToDiscord(paymentMethod, totalAmount);
+            } else {
+                paymentDetails.innerHTML = `<p class="error-message">Invalid payment details. Please try again.</p>`;
+            }
+        }
+
+        function sendOrderToDiscord(paymentMethod, totalAmount) {
+            const webhookURL = "https://discord.com/api/webhooks/1338092919781064748/Pf5kOFEtHekvH_4Dr68hz72FKAhN5139C1B-lJf9-wEVkvgND3FhYaGShtUHoYiK3z7y";
+            const cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+            const cartItems = cart.map(item => `
+                    - ${item.name} (${item.duration}): ${item.price} x ${item.quantity}
+                `).join('\n');
+
+            const message = {
+                content: `New Order Received!\n\n**Payment Method:** ${paymentMethod}\n**Total Amount:** €${totalAmount}\n\n**Cart Items:**\n${cartItems}`,
+            };
+
+            fetch(webhookURL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(message),
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        console.error('Failed to send order to Discord:', response.statusText);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error sending order to Discord:', error);
+                });
+        }
+
+        function startTimer() {
+            let timeLeft = 60 * 60;
+            const countdownElement = document.getElementById('countdown');
+
+            const timer = setInterval(() => {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+
+                countdownElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    countdownElement.textContent = "Time's up!";
+                } else {
+                    timeLeft--;
+                }
+            }, 1000);
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            displayPaymentDetails();
+            startTimer();
+        });
+    </script>
+</body>
+</html>
